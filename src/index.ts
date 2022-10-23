@@ -1,3 +1,5 @@
-export function doSomeStuff(thing: string): number {
-  return thing.length;
-}
+import {decode as decodeCBOR} from './cbor'
+
+export default {
+  decodeCBOR
+};
