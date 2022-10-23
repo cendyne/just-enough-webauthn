@@ -18,4 +18,19 @@ describe('CBOR Decoding', () => {
     expect(decode(new Uint8Array([0x19, 2, 0]))).toBe(512);
     expect(decode(new Uint8Array([0x19, 255, 255]))).toBe(65535);
   })
+  it('Can decode a single byte negative integer', () => {
+    expect(decode(new Uint8Array([0x20]))).toBe(-1);
+    expect(decode(new Uint8Array([0x21]))).toBe(-2);
+    expect(decode(new Uint8Array([0x37]))).toBe(-24);
+  })
+  it('Can decode a double byte negative integer', () => {
+    expect(decode(new Uint8Array([0x38, 0x18]))).toBe(-25);
+    expect(decode(new Uint8Array([0x38, 255]))).toBe(-256);
+  })
+  it('Can decode a triple byte unsigned integer', () => {
+    expect(decode(new Uint8Array([0x39, 1, 0]))).toBe(-257);
+    expect(decode(new Uint8Array([0x39, 1, 255]))).toBe(-512);
+    expect(decode(new Uint8Array([0x39, 2, 0]))).toBe(-513);
+    expect(decode(new Uint8Array([0x39, 255, 255]))).toBe(-65536);
+  })
 })

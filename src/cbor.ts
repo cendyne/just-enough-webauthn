@@ -34,6 +34,42 @@ function decodeUnsignedInteger(data: Uint8Array, argument: number, index: number
   }
   throw new Error('Unsigned integer is not supported or not well formed');
 }
+function decodeNegativeInteger(data: Uint8Array, argument: number, index: number): [number, number] {
+  if (argument < 24) {
+    return [-argument-1, 1];
+  }
+  const remainingDataLength = data.length - index - 1;
+  switch (argument) {
+    case 24: {
+      if (remainingDataLength > 0) {
+        const value = data[index + 1];
+        if (value < 24) {
+          throw new Error('Unsigned integer is not well formed');
+        }
+        return [-value-1, 2];
+      } else {
+        throw new Error('Unsigned integer is not well formed, the stream ended early');
+      }
+    }
+    case 25: {
+      if (remainingDataLength > 1) {
+        const value1 = data[index + 1];
+        const value2 = data[index + 2];
+        const value = (value1 << 8) | value2;
+        return [-value-1, 3];
+      } else {
+        throw new Error('Unsigned integer is not well formed, the stream ended early');
+      }
+    }
+    case 26: {
+      break;
+    }
+    case 27: {
+      break;
+    }
+  }
+  throw new Error('Unsigned integer is not supported or not well formed');
+}
 
 function decodeNext(data: Uint8Array, index: number): [any, number] {
   const byte = data[index];
@@ -42,6 +78,9 @@ function decodeNext(data: Uint8Array, index: number): [any, number] {
   switch (majorType) {
     case 0: {
       return decodeUnsignedInteger(data, argument, index);
+    }
+    case 1: {
+      return decodeNegativeInteger(data, argument, index);
     }
   }
   throw new Error('Unsupported or not well formed');
