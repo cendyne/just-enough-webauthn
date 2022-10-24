@@ -1,4 +1,4 @@
-import {decode} from './cbor'
+import {decode, decodeLength} from './cbor'
 
 import { describe, it, expect } from 'vitest'
 
@@ -105,5 +105,19 @@ describe('CBOR Decoding', () => {
     expect(() => {decode(new Uint8Array([0x98, 0x18]))}).toThrow(Error);
     // Less than 24
     expect(() => {decode(new Uint8Array([0x98, 1, 0]))}).toThrow(Error);
+  })
+  it('Decodes lengths properly', () => {
+    expect(decodeLength(new Uint8Array([0x00]), 0, 0)).toStrictEqual([0, 1]);
+    expect(decodeLength(new Uint8Array([0x0a]), 10, 0)).toStrictEqual([10, 1]);
+    expect(decodeLength(new Uint8Array([0x18, 0x18]), 24, 0)).toStrictEqual([24, 2]);
+    expect(decodeLength(new Uint8Array([0x18, 0x19]), 24, 0)).toStrictEqual([25, 2]);
+    expect(decodeLength(new Uint8Array([0x19, 0x10, 0]), 25, 0)).toStrictEqual([4096, 3]);
+  })
+  it('Rejects improper lengths lengths properly', () => {
+    expect(() => {decodeLength(new Uint8Array([0x18]), 24, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x18, 0]), 24, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x19]), 25, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x19,0]), 25, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x19,0,0]), 25, 0)}).toThrow(Error);
   })
 })

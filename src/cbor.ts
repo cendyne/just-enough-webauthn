@@ -1,4 +1,4 @@
-function decodeUnsignedInteger(
+export function decodeLength(
   data: Uint8Array,
   argument: number,
   index: number
@@ -11,10 +11,9 @@ function decodeUnsignedInteger(
     case 24: {
       if (remainingDataLength > 0) {
         const value = data[index + 1];
-        if (value < 24) {
-          break;
+        if (value >= 24) {
+          return [value, 2];
         }
-        return [value, 2];
       }
       break;
     }
@@ -23,13 +22,22 @@ function decodeUnsignedInteger(
         const value1 = data[index + 1];
         const value2 = data[index + 2];
         const value = (value1 << 8) | value2;
-        return [value, 3];
+        if (value >= 24) {
+          return [value, 3];
+        }
       }
       break;
     }
-    // Bigger integers not supported
   }
-  throw new Error('integer is not supported or not well formed');
+  throw new Error('Length not supported or not well formed');
+}
+
+function decodeUnsignedInteger(
+  data: Uint8Array,
+  argument: number,
+  index: number
+): [number, number] {
+  return decodeLength(data, argument, index);
 }
 function decodeNegativeInteger(
   data: Uint8Array,
@@ -45,19 +53,12 @@ function decodeByteString(
   argument: number,
   index: number
 ): [Uint8Array, number] {
-  const remainingDataLength = data.length - index - 1;
-  if (argument < 24) {
-    if (remainingDataLength >= argument) {
-      return [data.slice(index + 1, index + 1 + argument), argument + 1];
-    }
-  }
-  if (argument === 24 && remainingDataLength > 1) {
-    const length = data[index + 1];
-    if (remainingDataLength - 1 >= length) {
-      return [data.slice(index + 2, index + 2 + length), length + 2];
-    }
-  }
-  throw new Error('string is not supported or not well formed');
+  const [lengthValue, lengthConsumed] = decodeLength(data, argument, index);
+  const dataStartIndex = index + lengthConsumed;
+  return [
+    data.slice(dataStartIndex, dataStartIndex + lengthValue),
+    lengthConsumed + lengthValue,
+  ];
 }
 
 const TEXT_DECODER = new TextDecoder();
@@ -78,20 +79,9 @@ function decodeArray(
   if (argument === 0) {
     return [[], 1];
   }
-  let consumedLength = 1;
+  const [length, lengthConsumed] = decodeLength(data, argument, index);
+  let consumedLength = lengthConsumed;
   const value = [];
-  let length = 0;
-  if (argument < 24) {
-    length = argument;
-  } else if (argument === 24 && data.length - index - 1 > 0) {
-    length = data[index + 1];
-    if (length < 24) {
-      throw new Error('Length is too short');
-    }
-    consumedLength += 1;
-  } else {
-    throw new Error('array is not supported or well formed');
-  }
   for (let i = 0; i < length; i++) {
     const remainingDataLength = data.length - index - consumedLength;
     if (remainingDataLength <= 0) {
