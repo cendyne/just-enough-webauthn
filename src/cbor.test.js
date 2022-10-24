@@ -89,4 +89,21 @@ describe('CBOR Decoding', () => {
     expect(() => {decode(new Uint8Array([0x41]))}).toThrow(Error);
     expect(() => {decode(new Uint8Array([0x58,0x1a,0x61]))}).toThrow(Error);
   })
+  it('Can decode an empty array', () => {
+    expect(decode(new Uint8Array([0x80]))).toStrictEqual([]);
+  })
+  it('Can decode a short array', () => {
+    expect(decode(new Uint8Array([0x81, 1]))).toStrictEqual([1]);
+    expect(decode(new Uint8Array([0x82, 1, 2]))).toStrictEqual([1, 2]);
+  })
+  it('Can decode a longer array', () => {
+    expect(decode(new Uint8Array([0x98,0x18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]))).toStrictEqual([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+  })
+  it('Rejects arrays that are too short', () => {
+    expect(() => {decode(new Uint8Array([0x81]))}).toThrow(Error);
+    expect(() => {decode(new Uint8Array([0x98]))}).toThrow(Error);
+    expect(() => {decode(new Uint8Array([0x98, 0x18]))}).toThrow(Error);
+    // Less than 24
+    expect(() => {decode(new Uint8Array([0x98, 1, 0]))}).toThrow(Error);
+  })
 })

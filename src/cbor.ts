@@ -60,7 +60,6 @@ function decodeByteString(
   throw new Error('string is not supported or not well formed');
 }
 
-/*eslint node/prefer-global/text-decoder: [error]*/
 const TEXT_DECODER = new TextDecoder();
 function decodeString(
   data: Uint8Array,
@@ -69,6 +68,40 @@ function decodeString(
 ): [string, number] {
   const [value, length] = decodeByteString(data, argument, index);
   return [TEXT_DECODER.decode(value), length];
+}
+
+function decodeArray(
+  data: Uint8Array,
+  argument: number,
+  index: number
+): [any[], number] {
+  if (argument === 0) {
+    return [[], 1];
+  }
+  let consumedLength = 1;
+  const value = [];
+  let length = 0;
+  if (argument < 24) {
+    length = argument;
+  } else if (argument === 24 && data.length - index - 1 > 0) {
+    length = data[index + 1];
+    if (length < 24) {
+      throw new Error('Length is too short');
+    }
+    consumedLength += 1;
+  } else {
+    throw new Error('array is not supported or well formed');
+  }
+  for (let i = 0; i < length; i++) {
+    const remainingDataLength = data.length - index - consumedLength;
+    if (remainingDataLength <= 0) {
+      throw new Error('array is not supported or well formed');
+    }
+    const [decodedValue, consumed] = decodeNext(data, index + consumedLength);
+    value.push(decodedValue);
+    consumedLength += consumed;
+  }
+  return [value, consumedLength];
 }
 
 function decodeNext(data: Uint8Array, index: number): [any, number] {
@@ -87,6 +120,9 @@ function decodeNext(data: Uint8Array, index: number): [any, number] {
     }
     case 3: {
       return decodeString(data, argument, index);
+    }
+    case 4: {
+      return decodeArray(data, argument, index);
     }
   }
   throw new Error('Unsupported or not well formed');
