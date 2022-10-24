@@ -94,6 +94,48 @@ function decodeArray(
   return [value, consumedLength];
 }
 
+const MAP_ERROR = 'Map is not supported or well formed';
+
+function decodeMap(
+  data: Uint8Array,
+  argument: number,
+  index: number
+): [any, number] {
+  if (argument === 0) {
+    return [{}, 1];
+  }
+  const [length, lengthConsumed] = decodeLength(data, argument, index);
+  let consumedLength = lengthConsumed;
+  const result: any = {};
+  for (let i = 0; i < length; i++) {
+    let remainingDataLength = data.length - index - consumedLength;
+    if (remainingDataLength <= 0) {
+      throw new Error(MAP_ERROR);
+    }
+    // Load key
+    const [key, keyConsumed] = decodeNext(data, index + consumedLength);
+    consumedLength += keyConsumed;
+    remainingDataLength -= keyConsumed;
+    // Check that there's enough to have a value
+    if (remainingDataLength <= 0) {
+      throw new Error(MAP_ERROR);
+    }
+    // Check that the map key is a string
+    if (typeof key !== 'string') {
+      throw new Error(MAP_ERROR);
+    }
+    // Check that we have no duplicates
+    if (key in result) {
+      throw new Error(MAP_ERROR);
+    }
+    // Load value
+    const [value, valueConsumed] = decodeNext(data, index + consumedLength);
+    consumedLength += valueConsumed;
+    result[key] = value;
+  }
+  return [result, consumedLength];
+}
+
 function decodeNext(data: Uint8Array, index: number): [any, number] {
   const byte = data[index];
   const majorType = byte >> 5;
@@ -113,6 +155,9 @@ function decodeNext(data: Uint8Array, index: number): [any, number] {
     }
     case 4: {
       return decodeArray(data, argument, index);
+    }
+    case 5: {
+      return decodeMap(data, argument, index);
     }
   }
   throw new Error('Unsupported or not well formed');

@@ -2,7 +2,25 @@ import {decode, decodeLength} from './cbor'
 
 import { describe, it, expect } from 'vitest'
 
+function decodeHex(hex){
+  return Uint8Array.from(hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+}
+
 describe('CBOR Decoding', () => {
+  it('Decodes lengths properly', () => {
+    expect(decodeLength(new Uint8Array([0x00]), 0, 0)).toStrictEqual([0, 1]);
+    expect(decodeLength(new Uint8Array([0x0a]), 10, 0)).toStrictEqual([10, 1]);
+    expect(decodeLength(new Uint8Array([0x18, 0x18]), 24, 0)).toStrictEqual([24, 2]);
+    expect(decodeLength(new Uint8Array([0x18, 0x19]), 24, 0)).toStrictEqual([25, 2]);
+    expect(decodeLength(new Uint8Array([0x19, 0x10, 0]), 25, 0)).toStrictEqual([4096, 3]);
+  })
+  it('Rejects improper lengths lengths properly', () => {
+    expect(() => {decodeLength(new Uint8Array([0x18]), 24, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x18, 0]), 24, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x19]), 25, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x19,0]), 25, 0)}).toThrow(Error);
+    expect(() => {decodeLength(new Uint8Array([0x19,0,0]), 25, 0)}).toThrow(Error);
+  })
   it('Rejects empty input', () => {
     expect(() => {decode(new Uint8Array([]))}).toThrow(Error);
   })
@@ -106,18 +124,24 @@ describe('CBOR Decoding', () => {
     // Less than 24
     expect(() => {decode(new Uint8Array([0x98, 1, 0]))}).toThrow(Error);
   })
-  it('Decodes lengths properly', () => {
-    expect(decodeLength(new Uint8Array([0x00]), 0, 0)).toStrictEqual([0, 1]);
-    expect(decodeLength(new Uint8Array([0x0a]), 10, 0)).toStrictEqual([10, 1]);
-    expect(decodeLength(new Uint8Array([0x18, 0x18]), 24, 0)).toStrictEqual([24, 2]);
-    expect(decodeLength(new Uint8Array([0x18, 0x19]), 24, 0)).toStrictEqual([25, 2]);
-    expect(decodeLength(new Uint8Array([0x19, 0x10, 0]), 25, 0)).toStrictEqual([4096, 3]);
+  it('Can decode an empty map', () => {
+    expect(decode(new Uint8Array([0xa0]))).toStrictEqual({});
   })
-  it('Rejects improper lengths lengths properly', () => {
-    expect(() => {decodeLength(new Uint8Array([0x18]), 24, 0)}).toThrow(Error);
-    expect(() => {decodeLength(new Uint8Array([0x18, 0]), 24, 0)}).toThrow(Error);
-    expect(() => {decodeLength(new Uint8Array([0x19]), 25, 0)}).toThrow(Error);
-    expect(() => {decodeLength(new Uint8Array([0x19,0]), 25, 0)}).toThrow(Error);
-    expect(() => {decodeLength(new Uint8Array([0x19,0,0]), 25, 0)}).toThrow(Error);
+  it('Can decode a small map', () => {
+    expect(decode(new Uint8Array([0xa1,0x61,0x31,1]))).toStrictEqual({"1": 1});
   })
+  it('Rejects maps with missing key and values', () => {
+    expect(() => {decode(new Uint8Array([0xa1]))}).toThrow(Error);
+    expect(() => {decode(new Uint8Array([0xa1,0x61]))}).toThrow(Error);
+    expect(() => {decode(new Uint8Array([0xa1,0x61,0x31]))}).toThrow(Error);
+  })
+  it('Rejects maps with non string keys', () => {
+    expect(() => {decode(new Uint8Array([0xa1,0x61]))}).toThrow(Error);
+    expect(() => {decode(new Uint8Array([0xa1,0,1]))}).toThrow(Error);
+  })
+  it('Rejects maps with duplicate keys', () => {
+    expect(() => {decode(new Uint8Array([0xa1,0x61]))}).toThrow(Error);
+    expect(() => {decode(new Uint8Array([0xa2,0x61,0x31,1,0x61,0x31,1]))}).toThrow(Error);
+  })
+
 })
