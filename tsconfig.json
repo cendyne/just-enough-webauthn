@@ -2,10 +2,20 @@
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "build"
+    "outDir": "build",
+    "target": "es5",
+    "sourceMap": true,
+    "lib": ["esnext", "dom"],
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "isolatedModules": true
   },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts"
-  ]
+  ],
 }

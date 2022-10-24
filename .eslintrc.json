@@ -1,8 +1,16 @@
 {
-  "extends": "./node_modules/gts/",
+  "extends": [
+    "./node_modules/gts/"
+  ],
   "ignorePatterns": ["vitest.config.ts", "*.test.js"],
   "parserOptions": {
     "ecmaVersion": 11,
     "sourceType": "module"
+  },
+  "env": {
+    "browser": true
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off"
   }
 }

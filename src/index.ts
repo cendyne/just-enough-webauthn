@@ -1,5 +1,5 @@
-import {decode as decodeCBOR} from './cbor'
+import {decode as decodeCBOR} from './cbor';
 
 export default {
-  decodeCBOR
+  decodeCBOR,
 };
