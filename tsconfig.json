@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "build",
-    "target": "es5",
+    "target": "ES2020",
     "sourceMap": true,
     "lib": ["esnext", "dom"],
     "noFallthroughCasesInSwitch": true,

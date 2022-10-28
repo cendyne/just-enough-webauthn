@@ -121,7 +121,7 @@ function decodeMap(
       throw new Error(MAP_ERROR);
     }
     // Check that the map key is a string
-    if (typeof key !== 'string') {
+    if (typeof key !== 'string' && typeof key !== 'number') {
       throw new Error(MAP_ERROR);
     }
     // Check that we have no duplicates
@@ -160,16 +160,20 @@ function decodeNext(data: Uint8Array, index: number): [any, number] {
       return decodeMap(data, argument, index);
     }
   }
-  throw new Error('Unsupported or not well formed');
+  throw new Error(`Unsupported or not well formed at ${index}`);
 }
 
-export function decode(data: Uint8Array): any {
-  if (data.length === 0) {
+export function decodePartialCBOR(data: Uint8Array, index: number): [any, number] {
+  if (data.length === 0 || data.length <= index || index < 0) {
     throw new Error('No data');
   }
-  const [result, number] = decodeNext(data, 0);
-  if (number !== data.length) {
-    throw new Error('Data was decoded, but the whole stream was not processed');
+  return decodeNext(data, index);
+}
+
+export function decodeCBOR(data: Uint8Array): any {
+  let [value, length] = decodePartialCBOR(data, 0);
+  if (length !== data.length) {
+    throw new Error(`Data was decoded, but the whole stream was not processed ${length} != ${data.length}`);
   }
-  return result;
+  return value;
 }
