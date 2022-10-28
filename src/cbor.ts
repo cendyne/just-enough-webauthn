@@ -106,7 +106,7 @@ function decodeMap(
   }
   const [length, lengthConsumed] = decodeLength(data, argument, index);
   let consumedLength = lengthConsumed;
-  const result: any = {};
+  const result = new Map<string | number, any>();
   for (let i = 0; i < length; i++) {
     let remainingDataLength = data.length - index - consumedLength;
     if (remainingDataLength <= 0) {
@@ -125,13 +125,13 @@ function decodeMap(
       throw new Error(MAP_ERROR);
     }
     // Check that we have no duplicates
-    if (key in result) {
+    if (result.has(key)) {
       throw new Error(MAP_ERROR);
     }
     // Load value
     const [value, valueConsumed] = decodeNext(data, index + consumedLength);
     consumedLength += valueConsumed;
-    result[key] = value;
+    result.set(key, value);
   }
   return [result, consumedLength];
 }
