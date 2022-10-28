@@ -120,11 +120,16 @@ function decodeMap(
     if (remainingDataLength <= 0) {
       throw new Error(MAP_ERROR);
     }
-    // Check that the map key is a string
+    // Technically CBOR maps can have any type as the key, and so can JS Maps
+    // However, JS Maps can only reference such keys as references which would
+    // require key iteration and pattern matching.
+    // For simplicity, since such keys are not in use with WebAuthn, this
+    // capability is not implemented and the types are restricted to strings
+    // and numbers.
     if (typeof key !== 'string' && typeof key !== 'number') {
       throw new Error(MAP_ERROR);
     }
-    // Check that we have no duplicates
+    // CBOR Maps are not well formed if there are duplicate keys
     if (result.has(key)) {
       throw new Error(MAP_ERROR);
     }
@@ -163,7 +168,10 @@ function decodeNext(data: Uint8Array, index: number): [any, number] {
   throw new Error(`Unsupported or not well formed at ${index}`);
 }
 
-export function decodePartialCBOR(data: Uint8Array, index: number): [any, number] {
+export function decodePartialCBOR(
+  data: Uint8Array,
+  index: number
+): [any, number] {
   if (data.length === 0 || data.length <= index || index < 0) {
     throw new Error('No data');
   }
@@ -171,9 +179,11 @@ export function decodePartialCBOR(data: Uint8Array, index: number): [any, number
 }
 
 export function decodeCBOR(data: Uint8Array): any {
-  let [value, length] = decodePartialCBOR(data, 0);
+  const [value, length] = decodePartialCBOR(data, 0);
   if (length !== data.length) {
-    throw new Error(`Data was decoded, but the whole stream was not processed ${length} != ${data.length}`);
+    throw new Error(
+      `Data was decoded, but the whole stream was not processed ${length} != ${data.length}`
+    );
   }
   return value;
 }

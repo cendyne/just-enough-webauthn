@@ -1,31 +1,27 @@
 export function encodeHex(array: ArrayBuffer): string {
   return Array.from(new Uint8Array(array))
-    .map((b) => b.toString(16).padStart(2, '0'))
+    .map(b => b.toString(16).padStart(2, '0'))
     .join('');
 }
-export function decodeHex(text: string) : Uint8Array {
-  let match = text.match(/[0-9a-fA-F]{1,2}/g);
+export function decodeHex(text: string): Uint8Array {
+  const match = text.match(/[0-9a-fA-F]{1,2}/g);
   if (text.match(/^[0-9a-fA-F]+$/) && match && match.length) {
-    return Uint8Array.from(
-      match.map((byte) => parseInt(byte, 16))
-    );
+    return Uint8Array.from(match.map(byte => parseInt(byte, 16)));
   }
   throw new Error('Bad input to decodeHex');
 }
-export function encodeBase64(array: ArrayBuffer) : string {
+export function encodeBase64(array: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(array)));
 }
-export function decodeBase64(text: string) : Uint8Array {
-  return Uint8Array.from(atob(text), c => c.charCodeAt(0))
+export function decodeBase64(text: string): Uint8Array {
+  return Uint8Array.from(atob(text), c => c.charCodeAt(0));
 }
 export function encodeBase64Url(array: ArrayBuffer): string {
   return encodeBase64(array)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
-export function decodeBase64Url(text: string) : ArrayBuffer {
-  return decodeBase64(text
-    .replace(/-/g, '+')
-    .replace(/_/g, '/'));
+export function decodeBase64Url(text: string): ArrayBuffer {
+  return decodeBase64(text.replace(/-/g, '+').replace(/_/g, '/'));
 }
