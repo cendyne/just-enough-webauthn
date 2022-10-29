@@ -173,4 +173,16 @@ describe('CBOR Decoding', () => {
       [-3, decodeHex('86c25e976be1a374077d18820810021fc348c3b4d7c44fe57a1d45085352d162')]
     ]));
   });
+  it('Decodes false', () => {
+    expect(decodeCBOR(new Uint8Array([0b111_10100]))).toStrictEqual(false);
+  })
+  it('Decodes true', () => {
+    expect(decodeCBOR(new Uint8Array([0b111_10101]))).toStrictEqual(true);
+  })
+  it('Decodes null', () => {
+    expect(decodeCBOR(new Uint8Array([0b111_10110]))).toStrictEqual(null);
+  })
+  it('Decodes undefined', () => {
+    expect(decodeCBOR(new Uint8Array([0b111_10111]))).toStrictEqual(undefined);
+  })
 })

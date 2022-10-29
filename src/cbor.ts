@@ -164,6 +164,18 @@ function decodeNext(data: Uint8Array, index: number): [any, number] {
     case 5: {
       return decodeMap(data, argument, index);
     }
+    case 7: {
+      switch (argument) {
+        case 20:
+          return [false, 1];
+        case 21:
+          return [true, 1];
+        case 22:
+          return [null, 1];
+        case 23:
+          return [undefined, 1];
+      }
+    }
   }
   throw new Error(`Unsupported or not well formed at ${index}`);
 }
