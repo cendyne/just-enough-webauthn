@@ -10,6 +10,8 @@ describe('Decode Registration data', () => {
       flags: {
         userPresent: true,
         userVerified: false,
+        backupEligibility: false,
+        backupState: false,
         attestedCredentialDataIncluded: true,
         extensionDataIncluded: false
       },
@@ -41,6 +43,8 @@ describe('Decode Registration data', () => {
       flags: {
         userPresent: true,
         userVerified: false,
+        backupEligibility: false,
+        backupState: false,
         attestedCredentialDataIncluded: false,
         extensionDataIncluded: false
       },
@@ -55,6 +59,8 @@ describe('Decode Registration data', () => {
       flags: {
         userPresent: true,
         userVerified: false,
+        backupEligibility: false,
+        backupState: false,
         attestedCredentialDataIncluded: false,
         extensionDataIncluded: true
       },

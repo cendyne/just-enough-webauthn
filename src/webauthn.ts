@@ -12,6 +12,8 @@ export interface WebAuthnRegistrationAuthenticationData {
   flags: {
     userPresent: boolean;
     userVerified: boolean;
+    backupEligibility: boolean;
+    backupState: boolean;
     attestedCredentialDataIncluded: boolean;
     extensionDataIncluded: boolean;
   };
@@ -54,16 +56,23 @@ export function decodeWebAuthnRegistration(
   const rpIdHash = data.slice(0, 32);
   const flags = data[32];
   const userPresent = (flags & 1) !== 0;
-  const userVerified = (flags & 2) !== 0;
+  const userVerified = (flags & 4) !== 0;
+  const backupEligibility = (flags & 8) !== 0;
+  const backupState = (flags & 16) !== 0;
   const attestedCredentialDataIncluded = (flags & 64) !== 0;
   const extensionDataIncluded = (flags & 128) !== 0;
   const signCounter =
     (data[33] << 24) | (data[34] << 16) | (data[35] << 8) | data[36];
+  if (!backupEligibility && backupState) {
+    throw new Error('Backup flags are not acceptable');
+  }
   const value: WebAuthnRegistrationAuthenticationData = {
     rpIdHash,
     flags: {
       userPresent,
       userVerified,
+      backupEligibility,
+      backupState,
       attestedCredentialDataIncluded,
       extensionDataIncluded,
     },
