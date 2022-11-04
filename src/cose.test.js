@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import {decodePublicKey} from './cose'
+import {decodePublicKey, supportedJoseAlgorithmToCoseAlgorithm, isCoseAlgorithmSupported} from './cose'
 import { decodeBase64Url, decodeHex } from './util';
 import { decodeCBOR } from './cbor'
 
-describe('CBOR Decoding', () => {
+describe('COSE Key Decoding', () => {
   it('Decodes ES256 properly', () => {
     expect(decodePublicKey(new Map([
       [1, 2], // kty Label 1 - EC2 (2)
@@ -78,4 +78,18 @@ describe('CBOR Decoding', () => {
       y
     });
   });
+});
+describe('Supported COSE Algorithms', () => {
+  it('Should only accept supported numbers', () => {
+    expect(isCoseAlgorithmSupported(-7)).toBe(true);
+    expect(isCoseAlgorithmSupported(-257)).toBe(true);
+  })
+  it('Should only reject unsupported numbers', () => {
+    expect(isCoseAlgorithmSupported(-5)).toBe(false);
+    expect(isCoseAlgorithmSupported(256)).toBe(false);
+  })
+  it('Should translate COSE algorithms to JOSE Algorithms', () => {
+    expect(supportedJoseAlgorithmToCoseAlgorithm('ES256')).toBe(-7);
+    expect(supportedJoseAlgorithmToCoseAlgorithm('RS256')).toBe(-257);
+  })
 });

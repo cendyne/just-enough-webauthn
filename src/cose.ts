@@ -1,25 +1,10 @@
-export interface PublicKeyES256 {
-  algorithm: 'ES256';
-  // kty: 2 // label: 1 - COSE Key Types - EC2
-  // alg: -7 // label: 3 - COSE Algorithms - ES256
-  // crv: 1 // label: -1 - COSE Elliptic Curves - P-256
-  x: Uint8Array; // label: -2 - COSE Key Type Parameters - x
-  y: Uint8Array; // label: -3 - COSE Key Type Parameters - y
-}
-
-export interface PublicKeyRS256 {
-  algorithm: 'RS256';
-  // kty: 3 // label: 1 - COSE Key Types - RSA
-  // alg: -257 // label: 3 - COSE Algorithms - RS256
-  n: Uint8Array; // label: -1 - COSE Key Type Parameters - n
-  e: Uint8Array; // label: -2 - COSE Key Type Parameters - x
-}
+import {SupportedAlgorithm, SupportedPublicKey} from './crypto';
 
 const UNSUPPORTED_COSE_KEY = 'COSE Public Key is not well formed or supported';
 
 export function decodePublicKey(
   cborMap: Map<string | number, any>
-): PublicKeyES256 | PublicKeyRS256 {
+): SupportedPublicKey {
   const kty = cborMap.get(1);
   const alg = cborMap.get(3);
   if (kty === 2 && alg === -7) {
@@ -47,4 +32,21 @@ export function decodePublicKey(
     }
   }
   throw new Error(UNSUPPORTED_COSE_KEY);
+}
+
+export type SupportedCOSEAlgorithm = -7 | -257;
+
+export function supportedJoseAlgorithmToCoseAlgorithm(
+  alg: SupportedAlgorithm
+): SupportedCOSEAlgorithm {
+  switch (alg) {
+    case 'ES256':
+      return -7;
+    case 'RS256':
+      return -257;
+  }
+}
+
+export function isCoseAlgorithmSupported(alg: number) : boolean {
+  return alg === -7 || alg == -257;
 }
