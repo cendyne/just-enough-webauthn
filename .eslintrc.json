@@ -1,8 +1,12 @@
 {
   "extends": [
-    "./node_modules/gts/"
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
-  "ignorePatterns": ["vitest.config.ts", "*.test.js"],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "root": true,
+  "ignorePatterns": ["vitest.config.ts", "*.test.js", "test.js", "vite.config.js"],
   "parserOptions": {
     "ecmaVersion": 11,
     "sourceType": "module"

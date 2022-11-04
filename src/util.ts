@@ -22,6 +22,6 @@ export function encodeBase64Url(array: ArrayBuffer): string {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
-export function decodeBase64Url(text: string): ArrayBuffer {
+export function decodeBase64Url(text: string): Uint8Array {
   return decodeBase64(text.replace(/-/g, '+').replace(/_/g, '/'));
 }
