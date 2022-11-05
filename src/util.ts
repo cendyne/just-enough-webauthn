@@ -4,6 +4,8 @@ export function encodeHex(array: ArrayBuffer): string {
     .join('');
 }
 export function decodeHex(text: string): Uint8Array {
+  // Get rid of all punctuation and spacing.
+  text = text.replace(/[^0-9a-zA-Z]+/g, '');
   const match = text.match(/[0-9a-fA-F]{1,2}/g);
   if (text.match(/^[0-9a-fA-F]+$/) && match && match.length) {
     return Uint8Array.from(match.map(byte => parseInt(byte, 16)));

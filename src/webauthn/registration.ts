@@ -1,26 +1,7 @@
-import {decodePartialCBOR} from './cbor';
-import {decodePublicKey, PublicKeyES256, PublicKeyRS256} from './cose';
-
-export interface WebAuthnRegistrationAuthenticationDataAttestedCredentialData {
-  aaguid: Uint8Array;
-  credentialId: Uint8Array;
-  credential: PublicKeyES256 | PublicKeyRS256;
-}
-
-export interface WebAuthnRegistrationAuthenticationData {
-  rpIdHash: Uint8Array;
-  flags: {
-    userPresent: boolean;
-    userVerified: boolean;
-    backupEligibility: boolean;
-    backupState: boolean;
-    attestedCredentialDataIncluded: boolean;
-    extensionDataIncluded: boolean;
-  };
-  signCounter: number;
-  attestedCredentialData?: WebAuthnRegistrationAuthenticationDataAttestedCredentialData;
-  extensions?: Map<number | string, any>;
-}
+import {decodeCBOR, decodePartialCBOR} from '../cbor';
+import {decodePublicKey, isCoseAlgorithmSupported} from '../cose';
+import { encodeJWK } from '../jose';
+import { SignatureFormat, WebAuthnClientJson, WebAuthnRegister, WebAuthnRegisterArguments, WebAuthnRegistrationAuthenticationData, WebAuthnRegistrationAuthenticationDataAttestedCredentialData } from './defs';
 
 function decodeWebAuthnAttestedCredential(
   data: Uint8Array,
@@ -50,7 +31,7 @@ function decodeWebAuthnAttestedCredential(
   return [credentialData, credentialDataLength];
 }
 
-export function decodeWebAuthnRegistration(
+export function decodeWebAuthnAuthData(
   data: Uint8Array
 ): WebAuthnRegistrationAuthenticationData {
   const rpIdHash = data.slice(0, 32);
@@ -106,4 +87,71 @@ export function decodeWebAuthnRegistration(
   }
 
   return value;
+}
+
+export function decodeWebAuthnRegister(
+  attestationObject: Uint8Array
+): WebAuthnRegister {
+  const decoder = new TextDecoder();
+  let cbor = decodeCBOR(attestationObject);
+  if (!(cbor instanceof Map)) {
+    throw new Error('Attestation object not well formed');
+  }
+  let format = cbor.get('fmt');
+  let signature: SignatureFormat = {
+    format: 'none'
+  };
+  if (format === 'none') {
+    throw new Error('Not supported yet')
+  } else if (format === 'packed') {
+    let attStmt = cbor.get('attStmt');
+    if (!(attStmt instanceof Map)) {
+      throw new Error('packed attestation statement not well formed');
+    }
+    let alg = attStmt.get('alg');
+    let sig = attStmt.get('sig');
+    let x5c = attStmt.get('x5c');
+    if (!isCoseAlgorithmSupported(alg)) {
+      throw new Error('alg not supported');
+    }
+    if (!(sig instanceof Uint8Array)) {
+      throw new Error('sig not well formed or missing');
+    }
+    if (x5c) {
+      if (x5c instanceof Array) {
+        for (let x509 of x5c) {
+          if (!(x509 instanceof Uint8Array)) {
+            throw new Error('x5c not well formed');
+          }
+        }
+      } else {
+        throw new Error('x5c not well formed');
+      }
+    }
+    signature = {
+      format: 'packed',
+      alg,
+      sig,
+      x5c
+    }
+  } else {
+    throw new Error('Format not supported');
+  }
+  let authDataBytes = cbor.get('authData');
+  if (!(authDataBytes instanceof Uint8Array)) {
+    throw new Error('authData not well formed');
+  }
+  let authData = decodeWebAuthnAuthData(authDataBytes);
+  if (!authData.attestedCredentialData) {
+    throw new Error('Auth data lacks attested credential');
+  }
+  let publicKey = encodeJWK(authData.attestedCredentialData.credential);
+  let credentialId = authData.attestedCredentialData.credentialId;
+
+  return {
+    authData,
+    credentialId,
+    publicKey,
+    signature
+  }
 }
